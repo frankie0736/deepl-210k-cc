@@ -1,0 +1,37 @@
+{
+  "name": "deepl-translation-proxy",
+  "main": "src/index.ts",
+  "compatibility_date": "2024-11-01",
+
+  // 你的 Cloudflare 账号 ID（Dashboard → 右侧边栏 → Account ID）
+  "account_id": "YOUR_ACCOUNT_ID",
+
+  // KV 命名空间绑定
+  // 创建生产环境 KV: wrangler kv namespace create TRANSLATION_CACHE
+  // 创建开发环境 KV: wrangler kv namespace create TRANSLATION_CACHE --preview
+  // 然后将返回的 ID 分别填入下面的 id 和 preview_id 字段
+  "kv_namespaces": [
+    {
+      "binding": "TRANSLATION_CACHE",
+      "id": "YOUR_PRODUCTION_KV_ID",
+      "preview_id": "YOUR_PREVIEW_KV_ID"
+    }
+  ],
+
+  // 环境变量（非敏感信息）
+  "vars": {
+    "UPSTREAM_API_URL": "https://api.aihubmix.com/v1/chat/completions",
+    "MODEL_NAME": "deepseek-v3.2",
+    "CACHE_TTL_SECONDS": "2592000"
+  },
+
+  // 构建配置
+  "build": {
+    "command": "bun run build"
+  },
+
+  // 本地开发配置
+  "dev": {
+    "port": 8787
+  }
+}

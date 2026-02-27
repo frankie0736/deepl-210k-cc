@@ -1,0 +1,59 @@
+# dependencies
+node_modules
+
+# output
+out
+dist
+*.tgz
+
+# code coverage
+coverage
+*.lcov
+
+# logs
+logs
+_.log
+report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
+
+# dotenv environment variable files
+.env
+.env.development.local
+.env.test.local
+.env.production.local
+.env.local
+.dev.vars
+
+# Cloudflare Workers — real config contains account_id & KV IDs
+# Copy wrangler.example.jsonc → wrangler.jsonc and fill in your values
+wrangler.jsonc
+wrangler.toml
+wrangler.toml.backup
+.wrangler
+
+# AI coding assistants (personal config)
+.claude/
+AGENTS.md
+
+# Local-only files
+docs/
+scripts/warm-translations.ts
+
+# Script runtime output
+scripts/*.json
+scripts/*.log
+scripts/*.tmp
+
+# caches
+.eslintcache
+.cache
+*.tsbuildinfo
+
+# IDE
+.idea
+
+# OS
+.DS_Store
+
+# Playwright MCP
+.playwright-mcp/
+*.png

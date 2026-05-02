@@ -2,11 +2,11 @@ import type { CacheKeyParams } from '../types';
 
 /**
  * 生成缓存键
- * 格式: cache:sha256(text+sourceLang+targetLang+formality)
+ * 格式: cache:sha256(text+sourceLang+targetLang+formality+glossaryHash)
  */
 export async function generateCacheKey(params: CacheKeyParams): Promise<string> {
-  const { text, sourceLang, targetLang, formality } = params;
-  const content = `${text}|${sourceLang}|${targetLang}|${formality || 'default'}`;
+  const { text, sourceLang, targetLang, formality, glossaryHash } = params;
+  const content = `${text}|${sourceLang}|${targetLang}|${formality || 'default'}|${glossaryHash || 'none'}`;
 
   // 使用 Web Crypto API 生成 MD5 哈希
   const encoder = new TextEncoder();

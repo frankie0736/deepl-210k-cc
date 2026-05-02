@@ -21,8 +21,9 @@ export function adminPage(): string {
   h2 { margin-bottom: 0.8rem; font-size: 1.1rem; color: #555; }
   .card { background: #fff; border-radius: 8px; padding: 1.2rem; margin-bottom: 1.2rem; box-shadow: 0 1px 3px rgba(0,0,0,.1); }
   label { display: block; font-size: .85rem; color: #666; margin-bottom: .3rem; }
-  input { width: 100%; padding: .5rem .6rem; border: 1px solid #ddd; border-radius: 4px; font-size: .9rem; margin-bottom: .8rem; }
-  input:focus { outline: none; border-color: #4a90d9; }
+  input, textarea { width: 100%; padding: .5rem .6rem; border: 1px solid #ddd; border-radius: 4px; font-size: .9rem; margin-bottom: .8rem; }
+  input:focus, textarea:focus { outline: none; border-color: #4a90d9; }
+  textarea { min-height: 8rem; resize: vertical; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
   button { padding: .5rem 1rem; border: none; border-radius: 4px; font-size: .9rem; cursor: pointer; color: #fff; }
   .btn-primary { background: #4a90d9; }
   .btn-secondary { background: #6c757d; }
@@ -72,6 +73,10 @@ export function adminPage(): string {
     <input id="upstreamKey" placeholder="sk-..." oninput="autoDetectProvider()">
     <div class="hint">OpenRouter Key 包含 -or-，会自动识别服务商</div>
 
+    <label for="createGlossary">术语表 JSON（可选）</label>
+    <textarea id="createGlossary" placeholder='[{"targetLang":"DE","source":"drill pipe","target":"Bohrgestaenge"}]'></textarea>
+    <div class="hint">每项包含 targetLang / source / target。只在对应目标语言生效。</div>
+
     <button class="btn-primary" onclick="doCreate()">创建</button>
   </div>
 </div>
@@ -98,6 +103,14 @@ export function adminPage(): string {
     <input id="dashKey" placeholder="sk-..." oninput="autoDetectDashProvider()">
     <div class="hint">OpenRouter Key 包含 -or-，会自动识别</div>
     <button class="btn-warning" onclick="saveKey()">验证并保存</button>
+  </div>
+
+  <div class="card">
+    <h2>术语表</h2>
+    <label for="dashGlossary">Glossary JSON</label>
+    <textarea id="dashGlossary" placeholder='[{"targetLang":"DE","source":"drill pipe","target":"Bohrgestaenge"}]'></textarea>
+    <div class="hint">保存后会立即影响新翻译，并隔离缓存键。</div>
+    <button class="btn-primary" onclick="saveGlossary()">保存术语表</button>
   </div>
 
   <div class="card danger-zone">
@@ -138,6 +151,11 @@ function showResult(text, ok) {
   resultEl.style.display = 'block';
   resultEl.textContent = text;
   resultEl.className = ok ? 'success' : 'error';
+}
+
+function parseGlossaryText(raw) {
+  if (!raw.trim()) return [];
+  return JSON.parse(raw);
 }
 
 async function apiPost(path, body) {
@@ -186,8 +204,14 @@ async function doCreate() {
   const domain = $('domain').value.trim();
   const upstreamKey = $('upstreamKey').value.trim();
   if (!domain || !upstreamKey) return showResult('请填写域名和 API Key', false);
+  let glossary = [];
+  try {
+    glossary = parseGlossaryText($('createGlossary').value);
+  } catch (error) {
+    return showResult('术语表 JSON 解析失败: ' + error.message, false);
+  }
   showResult('创建中…（正在验证 Key，可能需要几秒）', true);
-  const { ok, data } = await apiPost('/admin/keys', { domain, upstreamKey, provider: createProvider });
+  const { ok, data } = await apiPost('/admin/keys', { domain, upstreamKey, provider: createProvider, glossary });
   if (ok && data.serviceKey) {
     resultEl.style.display = 'block';
     resultEl.className = 'success';
@@ -223,8 +247,10 @@ async function loadConfig() {
     '<tr><td>API Key</td><td><code>' + escHtml(data.maskedUpstreamKey) + '</code></td></tr>' +
     '<tr><td>模型</td><td>' + escHtml(data.modelName || '默认') + '</td></tr>' +
     '<tr><td>服务商</td><td style="word-break:break-all;font-size:.8rem">' + escHtml(data.upstreamUrl || '') + '</td></tr>' +
+    '<tr><td>术语条目</td><td>' + escHtml(String((data.glossary || []).length)) + '</td></tr>' +
     '<tr><td>创建时间</td><td>' + escHtml(data.createdAt) + '</td></tr>' +
     '</table>';
+  $('dashGlossary').value = JSON.stringify(data.glossary || [], null, 2);
   $('dashActions').style.display = 'block';
 }
 
@@ -252,6 +278,20 @@ async function saveKey() {
   const { ok, data } = await apiPost('/admin/keys/update', { serviceKey, upstreamKey, provider: dashProvider });
   showResult(ok ? 'API Key 已更新' : (data.error || '更新失败'), ok);
   if (ok) { $('dashKey').value = ''; loadConfig(); }
+}
+
+async function saveGlossary() {
+  let glossary = [];
+  try {
+    glossary = parseGlossaryText($('dashGlossary').value);
+  } catch (error) {
+    return showResult('术语表 JSON 解析失败: ' + error.message, false);
+  }
+
+  showResult('保存术语表中…', true);
+  const { ok, data } = await apiPost('/admin/keys/update', { serviceKey, glossary });
+  showResult(ok ? '术语表已更新' : (data.error || '保存失败'), ok);
+  if (ok) loadConfig();
 }
 
 async function doDelete() {

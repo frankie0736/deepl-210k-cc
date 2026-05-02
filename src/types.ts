@@ -9,11 +9,16 @@ export interface Env {
 }
 
 import type { DomainConfig } from './services/key-manager';
+import type { GlossaryEntry } from './services/glossary';
+
+export type AuthSource = 'header' | 'query' | 'body';
 
 /**
  * Hono context variables（中间件 → handler 传值）
  */
 export interface Variables {
+  requestId: string;
+  authSource: AuthSource | null;
   domainConfig: DomainConfig;
 }
 
@@ -98,4 +103,7 @@ export interface CacheKeyParams {
   sourceLang: string;
   targetLang: string;
   formality?: string;
+  glossaryHash?: string;
 }
+
+export type { GlossaryEntry };

@@ -1,4 +1,5 @@
-import type { OpenAIChatRequest, OpenAIChatResponse } from '../types';
+import type { GlossaryEntry, OpenAIChatRequest, OpenAIChatResponse } from '../types';
+import { buildGlossaryPromptSection } from './glossary';
 
 /**
  * 语言代码映射（DeepL -> 全称）
@@ -66,6 +67,7 @@ export async function translateBatch(
   targetLang: string,
   formality?: string,
   tagHandling?: string,
+  glossary: GlossaryEntry[] = [],
 ): Promise<string[]> {
   if (texts.length === 0) return [];
 
@@ -73,7 +75,7 @@ export async function translateBatch(
   if (texts.length === 1) {
     const result = await translateSingle(
       upstreamKey, upstreamUrl, modelName,
-      texts[0]!, sourceLang, targetLang, formality, tagHandling,
+      texts[0]!, sourceLang, targetLang, formality, tagHandling, glossary,
     );
     return [result];
   }
@@ -85,7 +87,7 @@ export async function translateBatch(
   for (const chunk of chunks) {
     const translated = await translateChunk(
       upstreamKey, upstreamUrl, modelName,
-      chunk, sourceLang, targetLang, formality, tagHandling,
+      chunk, sourceLang, targetLang, formality, tagHandling, glossary,
     );
     results.push(...translated);
   }
@@ -127,12 +129,13 @@ async function translateChunk(
   targetLang: string,
   formality?: string,
   tagHandling?: string,
+  glossary: GlossaryEntry[] = [],
 ): Promise<string[]> {
   // 尝试批量
   try {
     return await translateBatchJSON(
       upstreamKey, upstreamUrl, modelName,
-      texts, sourceLang, targetLang, formality, tagHandling,
+      texts, sourceLang, targetLang, formality, tagHandling, glossary,
     );
   } catch (e) {
     console.warn(`Batch translation failed, falling back to single: ${(e as Error).message}`);
@@ -143,7 +146,7 @@ async function translateChunk(
   for (const text of texts) {
     const result = await translateSingle(
       upstreamKey, upstreamUrl, modelName,
-      text, sourceLang, targetLang, formality, tagHandling,
+      text, sourceLang, targetLang, formality, tagHandling, glossary,
     );
     results.push(result);
   }
@@ -162,6 +165,7 @@ async function translateBatchJSON(
   targetLang: string,
   formality?: string,
   tagHandling?: string,
+  glossary: GlossaryEntry[] = [],
 ): Promise<string[]> {
   const targetName = getLanguageName(targetLang);
   const sourceName = sourceLang ? getLanguageName(sourceLang) : 'auto-detect';
@@ -183,6 +187,8 @@ async function translateBatchJSON(
   if (tagHandling === 'html' || tagHandling === 'xml') {
     prompt += '\nPreserve all HTML/XML tags, only translate text content inside tags.';
   }
+
+  prompt += buildGlossaryPromptSection(glossary);
 
   prompt += '\n\nRules:';
   prompt += '\n1. Return ONLY a valid JSON object with the same keys';
@@ -263,6 +269,7 @@ async function translateSingle(
   targetLang: string,
   formality?: string,
   tagHandling?: string,
+  glossary: GlossaryEntry[] = [],
   maxRetries: number = 2,
 ): Promise<string> {
   const targetName = getLanguageName(targetLang);
@@ -280,6 +287,8 @@ async function translateSingle(
     prompt += '\nPreserve all HTML/XML tags and only translate the text content inside tags.';
     prompt += '\nDo not modify any tag attributes or structure.';
   }
+
+  prompt += buildGlossaryPromptSection(glossary);
 
   prompt += '\n\nRules:';
   prompt += '\n1. Only output the translated text, no explanations';

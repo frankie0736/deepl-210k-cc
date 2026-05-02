@@ -34,9 +34,20 @@ wrangler.toml.backup
 .claude/
 AGENTS.md
 
-# Local-only files
+# Private debug / ops files
 docs/
-scripts/warm-translations.ts
+artifacts/
+scripts/
+tsconfig.scripts.json
+src/**/*.test.ts
+src/utils/deepl-language.ts
+src/utils/http.ts
+src/utils/mysql-sql.ts
+src/utils/site-audit.ts
+src/utils/sitemap.ts
+src/utils/trp-remediation.ts
+src/utils/trp-remote.ts
+src/utils/trp-site.ts
 
 # Script runtime output
 scripts/*.json

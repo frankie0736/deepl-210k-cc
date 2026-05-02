@@ -10,6 +10,7 @@
 - **自助管理** — Web 面板创建/管理域名配置，无需改代码
 - **翻译缓存** — KV 缓存翻译结果（30 天 TTL），相同内容只翻译一次
 - **批量翻译** — Numbered JSON 方案，多段文本 1 次 API 调用完成
+- **术语表边界** — 按目标语言配置术语规则，提示词和缓存键同步隔离
 - **60+ 语言** — 支持阿拉伯语、印地语、泰语等 DeepL 不支持的语言
 - **多服务商** — 支持 AIHubMix、OpenRouter，可扩展
 
@@ -64,24 +65,27 @@ bun run deploy
 
 ### 5. 配置域名和 API Key
 
-访问 `https://your-worker.workers.dev/admin`，创建新配置：
+访问 `https://<worker-host>/admin`，创建新配置：
 
 1. 填写你的网站域名
 2. 选择 API 服务商（AIHubMix / OpenRouter）
 3. 输入对应的 API Key
-4. 保存返回的 **Service Key**（仅显示一次）
+4. 可选填写术语表 JSON（按目标语言固定术语）
+5. 保存返回的 **Service Key**（仅显示一次）
 
 ### 6. 在 TranslatePress 中使用
 
 在 WordPress 的 `functions.php` 中添加请求重定向：
 
 ```php
+$deepl_hosts = ['<deepl-free-host>', '<deepl-pro-host>'];
+
 add_filter('pre_http_request', function($preempt, $args, $url) {
-    if (strpos($url, 'api-free.deepl.com') !== false
-        || strpos($url, 'api.deepl.com') !== false) {
+    if (strpos($url, $deepl_hosts[0]) !== false
+        || strpos($url, $deepl_hosts[1]) !== false) {
         $new_url = str_replace(
-            ['api-free.deepl.com', 'api.deepl.com'],
-            'your-worker.workers.dev',  // 替换为你的域名
+            $deepl_hosts,
+            '<worker-host>',  // 替换为你的 Worker Host
             $url
         );
         return wp_remote_request($new_url, $args);
@@ -102,6 +106,7 @@ src/
   services/
     key-manager.ts      — 域名配置 KV CRUD
     translator.ts       — 批量翻译 + 单条降级
+    glossary.ts         — 术语表解析、筛选与提示词拼接
   utils/
     cache.ts            — SHA-256 翻译缓存
     parser.ts           — DeepL 请求解析
@@ -125,6 +130,7 @@ src/
 - 多段文本 → numbered JSON 批量翻译 (`{"0":"text","1":"text"}` → `{"0":"译文","1":"译文"}`)
 - 自动分块：每块 ≤20 段或 ≤5000 字符
 - JSON 解析失败 → 自动降级逐条翻译
+- 术语表按目标语言注入提示词，同时参与缓存键，避免旧缓存污染新术语
 
 ### KV 存储
 
@@ -157,7 +163,7 @@ src/
 
 | 变量 | 默认值 | 说明 |
 |------|--------|------|
-| `UPSTREAM_API_URL` | `https://api.aihubmix.com/v1/chat/completions` | 上游 API 地址 |
+| `UPSTREAM_API_URL` | `https://<upstream-api-host>/v1/chat/completions` | 上游 API 地址 |
 | `MODEL_NAME` | `deepseek-v3.2` | 翻译模型 |
 | `CACHE_TTL_SECONDS` | `2592000` | 缓存 TTL（30 天） |
 

@@ -7,12 +7,15 @@
  *   cache:*              → translation cache    (no conflict)
  */
 
+import type { GlossaryEntry } from './glossary';
+
 export interface DomainConfig {
   domain: string;
   serviceKey: string;
   upstreamKey: string;
   upstreamUrl?: string;
   modelName?: string;
+  glossary?: GlossaryEntry[];
   createdAt: string;
 }
 
@@ -26,6 +29,7 @@ export async function createServiceKey(
   upstreamKey: string,
   upstreamUrl: string,
   modelName?: string,
+  glossary?: GlossaryEntry[],
 ): Promise<string> {
   // 1. Check duplicate
   const existing = await kv.get(`domain:${domain}`);
@@ -49,6 +53,7 @@ export async function createServiceKey(
     upstreamKey,
     upstreamUrl,
     modelName,
+    glossary,
     createdAt: new Date().toISOString(),
   };
 
@@ -104,6 +109,7 @@ export interface ConfigUpdates {
   upstreamKey?: string;
   upstreamUrl?: string;
   modelName?: string;
+  glossary?: GlossaryEntry[];
 }
 
 export async function updateConfig(
@@ -129,6 +135,7 @@ export async function updateConfig(
 
   if (updates.upstreamUrl) config.upstreamUrl = updates.upstreamUrl;
   if (updates.modelName) config.modelName = updates.modelName;
+  if (updates.glossary !== undefined) config.glossary = updates.glossary;
 
   await kv.put(`config:${serviceKey}`, JSON.stringify(config));
   return config;

@@ -32,7 +32,8 @@ export function helpPage(host: string): string {
   th { background: #f1f3f5; text-align: left; padding: .5rem .8rem; border-bottom: 2px solid #dee2e6; }
   td { padding: .5rem .8rem; border-bottom: 1px solid #eee; }
   .lang-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: .3rem .8rem; font-size: .88rem; margin-bottom: 1rem; }
-  footer { text-align: center; color: #999; font-size: .82rem; margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid #eee; }
+footer { text-align: center; color: #999; font-size: .82rem; margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid #eee; }
+footer a { color: inherit; }
 </style>
 </head>
 <body>
@@ -91,7 +92,7 @@ export function helpPage(host: string): string {
     <li>在 API Key 栏填入第 1 步获得的 <code>Service Key</code></li>
     <li>保存后，如果显示 "API key is valid"，说明配置成功</li>
   </ol>
-  <div class="info">配置完成后，TranslatePress 翻译页面时会自动调用本服务。首次翻译会稍慢（需调用 AI），后续同内容直接走缓存。</div>
+  <div class="info">配置完成后，TranslatePress 翻译页面时会自动调用本服务。首次翻译会稍慢（需调用 AI），后续同内容直接走缓存。若要固定行业术语，可在管理面板配置术语表 JSON。</div>
 </div>
 
 <h2>管理你的 Key</h2>
@@ -160,7 +161,10 @@ export function helpPage(host: string): string {
 <h3>忘记了 Service Key？</h3>
 <p>Service Key 仅在创建时显示一次，无法找回。如果遗失，需要删除旧配置后重新创建（需联系管理员）。</p>
 
-<footer>Translation Proxy &mdash; DeepL-compatible API powered by LLM</footer>
+<footer>
+  <div>Translation Proxy &mdash; DeepL-compatible API powered by LLM</div>
+  <div>Copyright &copy; 210工作室 · <a href="https://www.210k.cc" target="_blank" rel="noreferrer">www.210k.cc</a></div>
+</footer>
 
 </div>
 </body>
